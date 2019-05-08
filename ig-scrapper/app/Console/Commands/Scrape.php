@@ -36,7 +36,7 @@ class Scrape extends Command
 
     public $rhx_gis;
 
-    public $scrape_dir = "scrape_files/";
+    public $scrape_dir;
 
     /**
      * Execute the console command.
@@ -45,6 +45,7 @@ class Scrape extends Command
      */
     public function handle()
     {
+        $this->scrape_dir = storage_path()."/scrape_files/";
         $filename = $this->option('file');
         if (!file_exists($filename)) {
             $this->error('File ' . $filename . " not found");
@@ -68,13 +69,16 @@ class Scrape extends Command
                         $node = $data->node;
                         if (Posts::where("post_id", $node->id)->get()->count() > 0) continue;
 
-                        if (File::isDirectory($this->scrape_dir) === false) {
+                        if (!File::exists($this->scrape_dir)) {
                             File::makeDirectory($this->scrape_dir);
                         }
-                        File::makeDirectory($this->scrape_dir . $node->id);
-                        if($node->is_video=="true")
+                        if (!File::exists($this->scrape_dir . $node->id)) {
+                            File::makeDirectory($this->scrape_dir . $node->id);
+                        }
+
+                        if($node->is_video=="true" && File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".mp4"))
                             File::copy($node->video_url, $this->scrape_dir . $node->id . "/" . $node->shortcode.".mp4");
-                        else
+                        elseif(File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".jpg"))
                             File::copy($node->display_url, $this->scrape_dir . $node->id . "/" . $node->shortcode.".jpg");
 
                         $post = new Posts();
@@ -116,7 +120,7 @@ class Scrape extends Command
 
             $this->info("Work complete! Good luck!");
         } catch (\Exception $e) {
-            $this->error('Ooops, something went wrong - ' . $e->getMessage() . " in line " . $e->getLine());
+            $this->error('Ooops, something went wrong - "' . $e->getMessage() ."\" in file ". $e->getFile() ." line " . $e->getLine());
         }
     }
 
