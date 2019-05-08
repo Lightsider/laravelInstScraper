@@ -76,9 +76,9 @@ class Scrape extends Command
                             File::makeDirectory($this->scrape_dir . $node->id);
                         }
 
-                        if($node->is_video=="true" && File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".mp4"))
+                        if($node->is_video=="true" && !File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".mp4"))
                             File::copy($node->video_url, $this->scrape_dir . $node->id . "/" . $node->shortcode.".mp4");
-                        elseif(File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".jpg"))
+                        elseif(!File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode.".jpg"))
                             File::copy($node->display_url, $this->scrape_dir . $node->id . "/" . $node->shortcode.".jpg");
 
                         $post = new Posts();
