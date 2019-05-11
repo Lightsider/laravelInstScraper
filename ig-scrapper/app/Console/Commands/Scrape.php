@@ -77,13 +77,15 @@ class Scrape extends Command
 
                 foreach ($post_data as $data) {
                     $node = $data->node;
-                    if ($profile_data->edge_owner_to_timeline_media->count <= Posts::where("username", $user)->get()->count()) {
-                        $skipNext = true;
-                        break;
-                    }
+//                    if ($profile_data->edge_owner_to_timeline_media->count <= Posts::where("username", $user)->get()->count()) {
+//                        $skipNext = true;
+//                        break;
+//                    }
 
                     if (Posts::where("post_id", $node->id)->get()->count() > 0) {
-                        continue;
+//                        continue;
+                        $skipNext = true;
+                        break;
                     }
 
                     try {
