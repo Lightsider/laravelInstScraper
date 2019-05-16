@@ -205,7 +205,8 @@ class Scrape extends Command
             preg_match('/_sharedData = ({.*);<\/script>/', $response, $matches);
             $post_data = json_decode($matches[1])->entry_data->ProfilePage[0]->graphql->user->edge_owner_to_timeline_media->edges;
             $profile_data = json_decode($matches[1])->entry_data->ProfilePage[0]->graphql->user;
-            $this->rhx_gis = json_decode($matches[1])->rhx_gis;
+            $new_rhx = json_decode($matches[1])->config->viewerId;
+            $this->rhx_gis = ":{\"id\":\"".$new_rhx."\"}";
 
             sleep(rand(1, 10) / 10);
             return [$post_data, $profile_data];
