@@ -108,10 +108,17 @@ class Scrape extends Command
                                     File::copy($slide_node->display_url, $this->scrape_dir . $node->id . "/" . $slide_node->shortcode . ".jpg");
                                 sleep(rand(1, 10) / 10);
                             }
-                        } else {
+                        }
+                        elseif($node->__typename == "GraphVideo")
+                        {
+                            $short_code_media = $this->getPostVideoByShortcode($node->shortcode);
                             if ($node->is_video == "true" && !File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode . ".mp4"))
-                                File::copy($node->video_url, $this->scrape_dir . $node->id . "/" . $node->shortcode . ".mp4");
-                            elseif (!File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode . ".jpg"))
+                                File::copy($short_code_media->video_url, $this->scrape_dir . $node->id . "/" . $node->shortcode . ".mp4");
+
+                            sleep(rand(1, 10) / 10);
+                        }
+                        else {
+                            if (!File::exists($this->scrape_dir . $node->id . "/" . $node->shortcode . ".jpg"))
                                 File::copy($node->display_url, $this->scrape_dir . $node->id . "/" . $node->shortcode . ".jpg");
                             sleep(rand(1, 10) / 10);
                         }
@@ -280,5 +287,42 @@ class Scrape extends Command
         $post_data = json_decode($matches[1])->entry_data->PostPage[0]->graphql->shortcode_media->edge_sidecar_to_children->edges;
         sleep(rand(1, 10) / 10);
         return $post_data;
+    }
+
+    public function getPostVideoByShortcode($shortcode)
+    {
+        $opts = [
+            "http" => [
+                "method" => "GET",
+                "header" => "Accept-language: en\r\n" .
+                    "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13\r\n"
+            ]
+        ];
+        if ($this->option('proxy') !== "null") {
+            $opts["http"]["proxy"] = "tcp://" . trim($this->option('proxy'));
+            $opts["http"]["request_fulluri"] = "true";
+
+            if ($this->option('proxy-login') !== null && $this->option('proxy-password') !== null) {
+                $auth = base64_encode($this->option('proxy-login') . ':' . $this->option('proxy-password'));
+                $opts["http"]["header"] .= "Proxy-Authorization: Basic $auth";
+            }
+        }
+
+        $context = stream_context_create($opts);
+        $response = file_get_contents("https://www.instagram.com/p/" . $shortcode . "/",
+            false, $context);
+        try {
+            preg_match('/_sharedData = ({.*);<\/script>/', $response, $matches);
+            $post_data = json_decode($matches[1])->entry_data->PostPage[0]->graphql->shortcode_media;
+            sleep(rand(1, 10) / 10);
+            return $post_data;
+        }
+        catch (\Exception $e)
+        {
+            /*echo "Error ".$e->getMessage();
+            file_put_contents("1.txt",$response);
+            file_put_contents("2.txt",(string)$post_data);
+            die();*/
+        }
     }
 }
